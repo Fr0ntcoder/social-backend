@@ -1,24 +1,10 @@
 const express = require('express')
 const router = express.Router()
-const multer = require('multer')
-const fs = require('fs')
-const defaultDestination = 'uploads'
 
-if(!fs.existsSync(defaultDestination)) {
-  fs.mkdirSync(defaultDestination)
-}
+const userRouter = require('./users')
+const authRouter = require('./auth')
 
-const storage = multer.diskStorage({
-  destination: defaultDestination,
-  filename: function(req,file,cb) {
-      cb(null,file.originalname)
-  }
-})
-
-const uploads = multer({storage})
-
-router.get('/register', (req, res) => {
-  res.send('register')
-})
+router.use('/users', userRouter)
+router.use('/auth', authRouter)
 
 module.exports = router
