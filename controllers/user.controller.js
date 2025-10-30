@@ -93,7 +93,7 @@ class UserController {
       })
 
       if(!user) {
-        return res.status(400).json({error: 'Не удалось найти пользователя'})
+        return res.status(404).json({error: 'Не удалось найти пользователя'})
       }
 
       res.json(user)
