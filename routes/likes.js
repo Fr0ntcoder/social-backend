@@ -6,6 +6,6 @@ const { authToken } = require('../middleware/auth')
 const { likeController } = require('../controllers')
 
 router.post('', authToken, likeController.like)
-router.delete('/:id', authToken, likeController.like)
+router.delete('/:id', authToken, likeController.unlike)
 
 module.exports = router

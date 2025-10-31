@@ -8,20 +8,21 @@ const jwt = require('jsonwebtoken')
 class AuthController {
   async register(req, res) {
     const { email, password, name } = req.body
-
     if (!email || !password || !name) {
       return res.status(400).json({ error: 'Все поля обязательны' })
     }
+
     try {
-      // Проверяем,существуют ли пользователь
-      const existiUser = await prisma.user.findUnique({ where: { email } })
-      if (existiUser) {
+      // Проверяем, существует ли пользователь
+      const existingUser = await prisma.user.findUnique({ where: { email } })
+      if (existingUser) {
         return res.status(400).json({ error: 'Пользователь уже существует' })
       }
 
       // Хэшируем пароль
       const hashPassword = await bcrypt.hash(password, 10)
 
+      // Создаем аватар
       const png = Jdenticon.toPng(`${name}_${Date.now()}`, 200)
       const avatarName = `${name}_${Date.now()}.png`
       const avatarPath = path.join(__dirname, '/../uploads', avatarName)
@@ -34,6 +35,14 @@ class AuthController {
           password: hashPassword,
           name,
           avatarUrl: `/uploads/${avatarName}`,
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          avatarUrl: true,
+          createdAt: true,
+          updatedAt: true,
         },
       })
 
@@ -51,22 +60,37 @@ class AuthController {
     }
 
     try {
-      // Проверяем, верен ли логин и пароль
-      const user = prisma.user.findUnique({ where: email })
+      // Проверяем, существует ли пользователь
+      const user = await prisma.user.findUnique({
+        where: { email },
+      })
 
       if (!user) {
-        return res.status(400).json({ error: 'Неверный логин и пароль' })
+        return res.status(400).json({ error: 'Неверный логин или пароль' })
       }
 
-      const validPassword = bcrypt.compare(password, user.password)
+      // Проверяем пароль
+      const validPassword = await bcrypt.compare(password, user.password)
 
       if (!validPassword) {
-        return res.status(400).json({ error: 'Неверный пароль' })
+        return res.status(400).json({ error: 'Неверный логин или пароль' })
       }
 
-      const token = jwt.sign({ userId: user.id }, process.env.SECRET_KEY)
+      // Создаем JWT токен
+      const token = jwt.sign({ userId: user.id }, process.env.SECRET_KEY, {
+        expiresIn: '24h', // рекомендуется добавить время жизни токена
+      })
 
-      res.json({ token })
+      // Возвращаем токен и базовую информацию о пользователе
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          avatarUrl: user.avatarUrl,
+        },
+      })
     } catch (error) {
       console.error('Ошибка авторизации:', error)
       res.status(500).json({ error: 'Internal server error' })

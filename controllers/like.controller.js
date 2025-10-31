@@ -6,26 +6,45 @@ class LikeController {
     const userId = req.user.userId
 
     if (!postId) {
-      return res.status(400).json({ error: 'Все поля обязательны' })
+      return res.status(400).json({ error: 'ID поста обязателен' })
     }
 
     try {
+      // Проверяем существование поста
+      const post = await prisma.post.findUnique({
+        where: { id: postId },
+      })
+
+      if (!post) {
+        return res.status(404).json({ error: 'Пост не найден' })
+      }
+
       const existLike = await prisma.like.findFirst({
         where: { postId, userId },
       })
 
       if (existLike) {
-        return res.status(400).json({ error: 'Все уже поставили лайк' })
+        return res.status(400).json({ error: 'Вы уже поставили лайк этому посту' })
       }
 
       const like = await prisma.like.create({
         data: { postId, userId },
       })
 
-      res.json(like)
+      res.status(201).json(like)
     } catch (error) {
       console.error('Лайк не поставлен', error)
-      res.status(500).json({ error: 'Internal server error' })
+
+      // Обработка ошибок Prisma
+      if (error.code === 'P2003') {
+        return res.status(400).json({ error: 'Пост не найден' })
+      }
+
+      if (error.code === 'P2002') {
+        return res.status(400).json({ error: 'Лайк уже существует' })
+      }
+
+      res.status(500).json({ error: 'Не удалось поставить лайк' })
     }
   }
 
@@ -34,15 +53,16 @@ class LikeController {
     const userId = req.user.userId
 
     if (!id) {
-      return res.status(400).json({ error: 'Все уже поставили дизлайк' })
+      return res.status(400).json({ error: 'ID поста обязателен' })
     }
 
     try {
       const existLike = await prisma.like.findFirst({
         where: { postId: id, userId },
       })
+
       if (!existLike) {
-        return res.status(400).json({ error: 'лайк уже существует' })
+        return res.status(400).json({ error: 'Лайк не найден' })
       }
 
       const like = await prisma.like.deleteMany({
@@ -51,7 +71,7 @@ class LikeController {
 
       res.json(like)
     } catch (error) {
-      console.error('Дизлайк не поставлен', error)
+      console.error('Не удалось убрать лайк', error)
       res.status(500).json({ error: 'Internal server error' })
     }
   }
