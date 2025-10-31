@@ -6,6 +6,6 @@ const { authToken } = require('../middleware/auth')
 const { followController } = require('../controllers')
 
 router.post('', authToken, followController.follow)
-router.delete('/:id', authToken, followController.unfollow)
+router.delete('', authToken, followController.unfollow)
 
 module.exports = router

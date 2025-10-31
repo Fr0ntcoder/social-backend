@@ -5,9 +5,8 @@ const authRouter = require('./auth')
 const userRouter = require('./users')
 const postRouter = require('./posts')
 const commentRouter = require('./comments')
-const likeRouter = require('./comments')
+const likeRouter = require('./likes')
 const folowRouter = require('./follows')
-
 
 router.use('/users', userRouter)
 router.use('/auth', authRouter)

@@ -8,9 +8,9 @@ RUN yarn install
 
 COPY . .
 
-RUN yarn add -g prisma
+RUN yarn global add prisma
 
-RUN prisma generate
+RUN npx prisma generate
 
 COPY prisma/schema.prisma ./prisma/
 
